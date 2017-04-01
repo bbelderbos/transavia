@@ -165,5 +165,5 @@ if __name__ == '__main__':
         output = '\n'.join(gen_output(results, sort_by=sort, limit=limit))
         content.append(output)
 
-    print('\n'.join(content))
-    #mail_html(subject, '\n'.join(content))
+    #print('\n'.join(content))
+    mail_html(subject, '\n'.join(content))
