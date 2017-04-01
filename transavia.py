@@ -33,8 +33,8 @@ REFRESH_CACHE = 3600
 LOCAL = 'MacBook' in socket.gethostname()
 NOW = datetime.datetime.now()
 NUM_MONTHS_TO_CHECK = 3
-DAYTIME = '0800-2200'  # lets travel normal hours for now :)
-MAX_PRICE = 200
+DAYTIME = '0900-2200'  # lets travel normal hours for now :)
+MAX_PRICE = 250
 DEFAULT_SORT = 'price'
 LIMIT = 20
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
     content = ['<h1>Results (max price {})</h1>'.format(MAX_PRICE)]
 
     report_sorts = ('price', 'leave')
-    report_limits = (200, 100)
+    report_limits = (20, 100)
     reports = zip(report_sorts, report_limits)
 
     for sort, limit in reports:
