@@ -1,8 +1,10 @@
 '''Script to check for cheap Transavia flights between two airport codes.
    Checks 3 months ahead for reasonable travel times (DAYTIME)'''
 from collections import namedtuple
+import calendar
 import datetime
 import os
+import socket
 import sys
 import time
 
@@ -28,6 +30,7 @@ API_URL = ('https://api.transavia.com/v1/flightoffers'
 REFRESH_CACHE = 3600
 
 # look 3 months ahead
+LOCAL = 'MacBook' in socket.gethostname()
 NOW = datetime.datetime.now()
 NUM_MONTHS_TO_CHECK = 3
 DAYTIME = '0800-2200'  # lets travel normal hours for now :)
@@ -87,7 +90,7 @@ def gen_output(results, sort_by=None, limit=LIMIT):
     output.append('<h2>* Sorted by {}</h2>'.format(sort_by))
     output.append('<table>')
 
-    cols = 'Leave Goback Eur Link'.split()
+    cols = 'Leave Goback Price Link'.split()
     fmt = ('<tr>'
            '<th>{:<16}</th>'
            '<th>{:<16}</th>'
@@ -165,5 +168,7 @@ if __name__ == '__main__':
         output = '\n'.join(gen_output(results, sort_by=sort, limit=limit))
         content.append(output)
 
-    #print('\n'.join(content))
-    mail_html(subject, '\n'.join(content))
+    if LOCAL:
+        print('\n'.join(content))
+    else:
+        mail_html(subject, '\n'.join(content))
