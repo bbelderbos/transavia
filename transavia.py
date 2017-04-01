@@ -1,9 +1,11 @@
-'''Script to check for cheap Transavia flights between two airport codes.
-   Checks 3 months ahead for reasonable travel times (DAYTIME)'''
+'''Script to check for cheap Transavia flights
+between two airport codes for n days duration.
+Sends html report to mail set in ENV var'''
 from collections import namedtuple
 import calendar
 import datetime
 import os
+import re
 import socket
 import sys
 import time
@@ -29,14 +31,12 @@ API_URL = ('https://api.transavia.com/v1/flightoffers'
            '&orderby=Price')
 REFRESH_CACHE = 3600
 
-# look 3 months ahead
 LOCAL = 'MacBook' in socket.gethostname()
 NOW = datetime.datetime.now()
 NUM_MONTHS_TO_CHECK = 3
-DAYTIME = '0900-2200'  # lets travel normal hours for now :)
-MAX_PRICE = 250
 DEFAULT_SORT = 'price'
-LIMIT = 20
+DEFAULT_TIMERANGE = '0800-2200'
+DEFAULT_MAX_PRICE = 200
 
 Record = namedtuple('Record', 'leave goback price link')
 
@@ -77,8 +77,8 @@ def query_api(params):
         price = offer['pricingInfoSum']['totalPriceAllPassengers']
         link = offer['deeplink']['href']
 
-        yield Record(leave=leave_day + leave,
-                     goback=goback_day + goback,
+        yield Record(leave=leave + leave_day,
+                     goback=goback + goback_day,
                      price=price,
                      link=link)
 
@@ -90,13 +90,10 @@ def _get_dayname(day):
         return ''
     weekday = dt.weekday()
     day_name = calendar.day_name[weekday]
-    return day_name[:3] + ' '
+    return ' ({})'.format(day_name[:3])
 
 
-def gen_output(results, sort_by=None, limit=LIMIT):
-    if sort_by is None:
-        sort_by = DEFAULT_SORT
-
+def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
     sort = lambda r: getattr(r, sort_by)
     try:
         results.sort(key=sort)
@@ -122,14 +119,10 @@ def gen_output(results, sort_by=None, limit=LIMIT):
            '<td>{0.price}</td>'
            '<td><a href="{0.link}">book</a></td>'
            '</tr>')
-    i = 0
     for rec in results:
-        if int(rec.price) > MAX_PRICE:
+        if int(rec.price) > max_price:
             continue
-        i += 1
         output.append(fmt.format(rec))
-        if i == limit:
-            break
 
     output.append('</table>')
     return output
@@ -140,12 +133,15 @@ if __name__ == '__main__':
     args = sys.argv
 
     if len(args) < 3:
-        print('Usage: {} from_airport to_airport days'.format(script))
-        print('Airport codes: http://bit.ly/2ohU0H4')
+        usage = ('Usage: {} from to day '.format(script),
+                 '(timerange, default={}) '.format(DEFAULT_TIMERANGE),
+                 '(maxprice, default={})'.format(DEFAULT_MAX_PRICE))
+        print(''.join(usage))
+        print('Use airport codes for from / to - all codes: http://bit.ly/2ohU0H4')
         sys.exit(1)
 
     else:
-        # TODO, verify against:
+        # TODO: verify against:
         # https://raw.githubusercontent.com/datasets/airport-codes/master/data/airport-codes.csv
         origin = args[0].upper()
         destination = args[1].upper()
@@ -154,16 +150,28 @@ if __name__ == '__main__':
         except ValueError:
             print('Please provide a number for duration days')
             sys.exit(1)
-        if len(args) == 4:
-            sort_by = args[3]
+
+        if len(args) > 3:
+            timerange = args[3]
+            if not re.match(r'\d{4}-\d{4}', timerange):
+                sys.exit('Please provide a timerange with format like {}'.format(DEFAULT_TIMERANGE))
         else:
-            sort_by = None
+            timerange = DEFAULT_TIMERANGE
+
+        if len(args) > 4:
+            try:
+                max_price = int(args[4])
+            except ValueError:
+                print('Please provide a numeric max price')
+                sys.exit(1)
+        else:
+            max_price = DEFAULT_MAX_PRICE
 
     months = gen_months()
 
     keys = ('origin destination start_date end_date start_timerange '
             'end_timerange days_stay').split()
-    values = (origin, destination, 0, 0, DAYTIME, DAYTIME, duration)
+    values = (origin, destination, 0, 0, timerange, timerange, duration)
     url_params = dict(zip(keys, values))
 
     results = []
@@ -180,14 +188,11 @@ if __name__ == '__main__':
     subject = 'Flights {} - {} ({} days stay)'.format(
         origin, destination, duration)
 
-    content = ['<h1>Results (max price {})</h1>'.format(MAX_PRICE)]
+    content = ['<h1>Results (max price {})</h1>'.format(max_price)]
 
-    report_sorts = ('price', 'leave')
-    report_limits = (20, 100)
-    reports = zip(report_sorts, report_limits)
-
-    for sort, limit in reports:
-        output = '\n'.join(gen_output(results, sort_by=sort, limit=limit))
+    sort_orders = ('price', 'leave')
+    for sort in sort_orders:
+        output = '\n'.join(gen_output(results, sort_by=sort))
         content.append(output)
 
     if LOCAL:
