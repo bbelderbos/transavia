@@ -84,13 +84,24 @@ def gen_output(results, sort_by=None, limit=LIMIT):
         raise
     
     output = []
-    output.append('\n* Sorted by {}\n'.format(sort_by))
+    output.append('<h2>* Sorted by {}</h2>'.format(sort_by))
+    output.append('<table>')
 
     cols = 'Leave Goback Eur Link'.split()
-    output.append('{:<16} | {:<16} | {:<3} | {}'.format(*cols))
-    output.append('-' * 41)
+    fmt = ('<tr>'
+           '<th>{:<16}</th>'
+           '<th>{:<16}</th>'
+           '<th>{:<3}</th>'
+           '<th>{}</th>'
+           '</tr>')
+    output.append(fmt.format(*cols))
 
-    fmt = '{0.leave} | {0.goback} | {0.price} | <a href="{0.link}">book</a>'
+    fmt = ('<tr>'
+           '<td>{0.leave}</td>'
+           '<td>{0.goback}</td>'
+           '<td>{0.price}</td>'
+           '<td><a href="{0.link}">book</a></td>'
+           '</tr>')
     i = 0
     for rec in results:
         if int(rec.price) > MAX_PRICE:
@@ -100,6 +111,7 @@ def gen_output(results, sort_by=None, limit=LIMIT):
         if i == limit:
             break
 
+    output.append('</table>')
     return output
 
 
@@ -148,9 +160,10 @@ if __name__ == '__main__':
     subject = 'Flights {} - {} ({} days stay)'.format(
         origin, destination, duration) 
 
-    content = ['Results (max price {})'.format(MAX_PRICE)]
+    content = ['<h1>Results (max price {})</h1>'.format(MAX_PRICE)]
     for sort, limit in dict(zip(['price', 'leave'], [20, 100])).items():
         output = '\n'.join(gen_output(results, sort_by=sort, limit=limit))
         content.append(output)
 
-    mail_html(subject, '\n'.join(content))
+    print('\n'.join(content))
+    #mail_html(subject, '\n'.join(content))
