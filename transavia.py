@@ -70,10 +70,27 @@ def query_api(params):
 
         leave = offer['outboundFlight']['departureDateTime'][:-3]
         goback = offer['inboundFlight']['departureDateTime'][:-3]
+
+        leave_day = _get_dayname(leave)
+        goback_day = _get_dayname(goback)
+
         price = offer['pricingInfoSum']['totalPriceAllPassengers']
         link = offer['deeplink']['href']
 
-        yield Record(leave=leave, goback=goback, price=price, link=link)
+        yield Record(leave=leave_day + leave,
+                     goback=goback_day + goback,
+                     price=price,
+                     link=link)
+
+
+def _get_dayname(day):
+    try:
+        dt = datetime.datetime.strptime(day, '%Y-%m-%dT%H:%M')
+    except:
+        return ''
+    weekday = dt.weekday()
+    day_name = calendar.day_name[weekday]
+    return day_name[:3] + ' '
 
 
 def gen_output(results, sort_by=None, limit=LIMIT):
@@ -85,16 +102,16 @@ def gen_output(results, sort_by=None, limit=LIMIT):
         results.sort(key=sort)
     except AttributeError:
         raise
-    
+
     output = []
     output.append('<h2>* Sorted by {}</h2>'.format(sort_by))
     output.append('<table>')
 
     cols = 'Leave Goback Price Link'.split()
     fmt = ('<tr>'
-           '<th>{:<16}</th>'
-           '<th>{:<16}</th>'
-           '<th>{:<3}</th>'
+           '<th>{}</th>'
+           '<th>{}</th>'
+           '<th>{}</th>'
            '<th>{}</th>'
            '</tr>')
     output.append(fmt.format(*cols))
@@ -161,7 +178,7 @@ if __name__ == '__main__':
         time.sleep(2)
 
     subject = 'Flights {} - {} ({} days stay)'.format(
-        origin, destination, duration) 
+        origin, destination, duration)
 
     content = ['<h1>Results (max price {})</h1>'.format(MAX_PRICE)]
     for sort, limit in dict(zip(['price', 'leave'], [20, 100])).items():
