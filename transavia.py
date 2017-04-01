@@ -10,6 +10,8 @@ from dateutil.relativedelta import relativedelta
 import requests
 import requests_cache
 
+from mail import mail_html
+
 API_KEY = os.getenv('TRANSAVIA_KEY')
 API_URL = ('https://api.transavia.com/v1/flightoffers'
            '?origin={origin}'
@@ -31,6 +33,7 @@ NUM_MONTHS_TO_CHECK = 3
 DAYTIME = '0800-2200'  # lets travel normal hours for now :)
 MAX_PRICE = 200
 DEFAULT_SORT = 'price'
+LIMIT = 20
 
 Record = namedtuple('Record', 'leave goback price link')
 
@@ -52,7 +55,8 @@ def query_api(params):
     headers = {'apikey': API_KEY}
     url = API_URL.format(**params)
     resp = requests.get(url, headers=headers).json()
-    # print(url, resp)
+    # print(url)
+    # print(resp)
 
     for offer in resp['flightOffer']:
         key = (offer['outboundFlight']['id'], offer['inboundFlight']['id'])
@@ -69,7 +73,7 @@ def query_api(params):
         yield Record(leave=leave, goback=goback, price=price, link=link)
 
 
-def print_results(results, sort_by=None):
+def gen_output(results, sort_by=None, limit=LIMIT):
     if sort_by is None:
         sort_by = DEFAULT_SORT
 
@@ -78,19 +82,25 @@ def print_results(results, sort_by=None):
         results.sort(key=sort)
     except AttributeError:
         raise
+    
+    output = []
+    output.append('\n* Sorted by {}\n'.format(sort_by))
 
-    print('Priting results up until max price of {}'.format(MAX_PRICE), end=' ')
-    print('sorted by {}\n'.format(sort_by))
+    cols = 'Leave Goback Eur Link'.split()
+    output.append('{:<16} | {:<16} | {:<3} | {}'.format(*cols))
+    output.append('-' * 41)
 
-    cols = 'Leave Goback EUR'.split()
-    print('{:<16} | {:<16} | {}'.format(*cols))
-    print('-' * 41)
-
-    fmt = '{0.leave} | {0.goback} | {0.price}' #\n{0.link}\n'
+    fmt = '{0.leave} | {0.goback} | {0.price} | <a href="{0.link}">book</a>'
+    i = 0
     for rec in results:
         if int(rec.price) > MAX_PRICE:
             continue
-        print(fmt.format(rec))
+        i += 1
+        output.append(fmt.format(rec))
+        if i == limit:
+            break
+
+    return output
 
 
 if __name__ == '__main__':
@@ -134,5 +144,13 @@ if __name__ == '__main__':
         results += list(query_api(url_params))
 
         time.sleep(2)
-    
-    print_results(results, sort_by)
+
+    subject = 'Flights {} - {} ({} days stay)'.format(
+        origin, destination, duration) 
+
+    content = ['Results (max price {})'.format(MAX_PRICE)]
+    for sort, limit in dict(zip(['price', 'leave'], [20, 100])).items():
+        output = '\n'.join(gen_output(results, sort_by=sort, limit=limit))
+        content.append(output)
+
+    mail_html(subject, '\n'.join(content))
