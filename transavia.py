@@ -40,8 +40,10 @@ DEFAULT_MAX_PRICE = 200
 
 Record = namedtuple('Record', 'leave goback price link')
 
-requests_cache.install_cache('cache', backend='sqlite',
-                             expire_after=REFRESH_CACHE)
+if LOCAL:
+    # cache when developing
+    requests_cache.install_cache('cache', backend='sqlite',
+                                 expire_after=REFRESH_CACHE)
 
 flight_combo_seen = set()
 
@@ -57,7 +59,7 @@ def gen_months():
 
 
 def query_api(params):
-    '''Query Transavia API with API_KEY in headers. 
+    '''Query Transavia API with API_KEY in headers.
     Url is build up from params dict passed in.
     API docs: https://developer.transavia.com'''
     headers = {'apikey': API_KEY}
@@ -140,11 +142,11 @@ if __name__ == '__main__':
     args = sys.argv
 
     if len(args) < 3:
-        usage = ('Usage: {} from to day '.format(script),
+        usage = ('Usage: {} from_airport to_airport days_stay '.format(script),
                  '(timerange, default={}) '.format(DEFAULT_TIMERANGE),
                  '(maxprice, default={})'.format(DEFAULT_MAX_PRICE))
         print(''.join(usage))
-        print('Use airport codes for from / to - all codes: http://bit.ly/2ohU0H4')
+        print('Use airport codes for from / to: http://bit.ly/2ohU0H4')
         sys.exit(1)
 
     else:
