@@ -181,7 +181,12 @@ if __name__ == '__main__':
         origin, destination, duration)
 
     content = ['<h1>Results (max price {})</h1>'.format(MAX_PRICE)]
-    for sort, limit in dict(zip(['price', 'leave'], [20, 100])).items():
+
+    report_sorts = ('price', 'leave')
+    report_limits = (200, 100)
+    reports = zip(report_sorts, report_limits)
+
+    for sort, limit in reports:
         output = '\n'.join(gen_output(results, sort_by=sort, limit=limit))
         content.append(output)
 
