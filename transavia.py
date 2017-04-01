@@ -33,7 +33,7 @@ REFRESH_CACHE = 3600
 
 LOCAL = 'MacBook' in socket.gethostname()
 NOW = datetime.datetime.now()
-NUM_MONTHS_TO_CHECK = 3
+NUM_MONTHS_TO_CHECK = 4
 DEFAULT_SORT = 'price'
 DEFAULT_TIMERANGE = '0800-2200'
 DEFAULT_MAX_PRICE = 200
@@ -47,14 +47,19 @@ flight_combo_seen = set()
 
 
 def gen_months():
+    '''Month generator starting with current month.
+    Format: YYYYMM'''
     i = 0
     while True:
-        i += 1
         month = (NOW + relativedelta(months=+i))
         yield month.strftime('%Y%m')
+        i += 1
 
 
 def query_api(params):
+    '''Query Transavia API with API_KEY in headers. 
+    Url is build up from params dict passed in.
+    API docs: https://developer.transavia.com'''
     headers = {'apikey': API_KEY}
     url = API_URL.format(**params)
     resp = requests.get(url, headers=headers).json()
@@ -84,6 +89,7 @@ def query_api(params):
 
 
 def _get_dayname(day):
+    '''Get weekday (first 3 chars) from date string'''
     try:
         dt = datetime.datetime.strptime(day, '%Y-%m-%dT%H:%M')
     except:
@@ -94,6 +100,7 @@ def _get_dayname(day):
 
 
 def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
+    '''Builds an html section of the output report'''
     sort = lambda r: getattr(r, sort_by)
     try:
         results.sort(key=sort)
