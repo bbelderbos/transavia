@@ -41,7 +41,7 @@ DEFAULT_MAX_PRICE = 200
 Record = namedtuple('Record', 'leave goback price link')
 
 if LOCAL:
-    # cache when developing
+    # cache when developing
     requests_cache.install_cache('cache', backend='sqlite',
                                  expire_after=REFRESH_CACHE)
 
@@ -94,7 +94,7 @@ def _get_dayname(day):
     '''Get weekday (first 3 chars) from date string'''
     try:
         dt = datetime.datetime.strptime(day, '%Y-%m-%dT%H:%M')
-    except:
+    except ValueError:
         return ''
     weekday = dt.weekday()
     day_name = calendar.day_name[weekday]
@@ -103,9 +103,8 @@ def _get_dayname(day):
 
 def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
     '''Builds an html section of the output report'''
-    sort = lambda r: getattr(r, sort_by)
     try:
-        results.sort(key=sort)
+        results.sort(key=lambda r: getattr(r, sort_by))
     except AttributeError:
         raise
 
