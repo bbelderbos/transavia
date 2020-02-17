@@ -31,7 +31,7 @@ API_URL = ('https://api.transavia.com/v1/flightoffers'
            '&orderby=Price')
 REFRESH_CACHE = 3600
 
-LOCAL = 'MacBook' in socket.gethostname()
+LOCAL = 'local' in socket.gethostname().lower()
 NOW = datetime.datetime.now()
 NUM_MONTHS_TO_CHECK = 4
 DEFAULT_SORT = 'price'
