@@ -124,17 +124,12 @@ def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
         "<td>{1.leave}</td>"
         "<td>{1.goback}</td>"
         "<td>{1.price}</td>"
-        '<td>{2}</td>'
+        "<td><a href='{1.link}'>book</a></td>"
         "</tr>"
     )
     for rec in results:
-        if int(rec.price) > max_price:
-            style = " style='color: b2beb5;'"
-            link = ""
-        else:
-            style = ""
-            link = "<a href='{}'>book</a>".format(rec.link)
-        row = fmt.format(style, rec, link)
+        style = " style='color: b2beb5;'" if int(rec.price) > max_price else ""
+        row = fmt.format(style, rec)
         output.append(row)
 
     output.append("</table>")
