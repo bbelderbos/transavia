@@ -144,7 +144,7 @@ if __name__ == "__main__":
             "(maxprice, default={})".format(DEFAULT_MAX_PRICE),
         )
         print("".join(usage))
-        print("Use airport codes for from / to: http://bit.ly/2ohU0H4")
+        print("Use airport codes for from / to: https://airmundo.com/en/blog/airport-codes-european-airports/")
         sys.exit(1)
 
     else:
