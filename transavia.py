@@ -124,7 +124,7 @@ def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
         "<td>{1.leave}</td>"
         "<td>{1.goback}</td>"
         "<td>{1.price}</td>"
-        "<td><a href='{1.link}'>book</a></td>"
+        "<td><a href='{1.link}' target='_blank'>book</a></td>"
         "</tr>"
     )
     for rec in results:
