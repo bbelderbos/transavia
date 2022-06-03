@@ -1,6 +1,4 @@
-"""Script to check for cheap Transavia flights
-between two airport codes for n days duration.
-Sends html report to mail set in ENV var"""
+"""Script to check for Transavia flights"""
 from collections import namedtuple
 import calendar
 import datetime
@@ -13,8 +11,6 @@ from dateutil.relativedelta import relativedelta
 import requests
 import requests_cache
 from dotenv import load_dotenv
-
-from mail import mail_html
 
 load_dotenv()
 
@@ -67,7 +63,8 @@ Record = namedtuple("Record", "leave goback price link")
 
 if DEBUG:
     # cache when developing
-    requests_cache.install_cache("cache", backend="sqlite", expire_after=REFRESH_CACHE)
+    requests_cache.install_cache(
+        "cache", backend="sqlite", expire_after=REFRESH_CACHE)
 
 
 def gen_months():
@@ -85,6 +82,7 @@ def query_api(params):
     Url is build up from params dict passed in.
     API docs: https://developer.transavia.com"""
     headers = {"apikey": API_KEY}
+    # no f-string because using 3.5 on server where this runs
     url = API_URL.format(**params)
     resp = requests.get(url, headers=headers).json()
 
@@ -107,7 +105,10 @@ def query_api(params):
         link = offer["deeplink"]["href"]
 
         yield Record(
-            leave=leave + leave_day, goback=goback + goback_day, price=price, link=link
+            leave=leave + leave_day,
+            goback=goback + goback_day,
+            price=price,
+            link=link
         )
 
 
@@ -135,7 +136,7 @@ def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
     output.append("<table>")
 
     cols = "Leave Goback Price Link".split()
-    fmt = "<tr>" "<th>{}</th>" "<th>{}</th>" "<th>{}</th>" "<th>{}</th>" "</tr>"
+    fmt = "<tr><th>{}</th><th>{}</th><th>{}</th><th>{}</th></tr>"
     output.append(fmt.format(*cols))
 
     fmt = (
@@ -166,7 +167,10 @@ if __name__ == "__main__":
             "(maxprice, default={})".format(DEFAULT_MAX_PRICE),
         )
         print("".join(usage))
-        print("Use airport codes for from / to: https://airmundo.com/en/blog/airport-codes-european-airports/")
+        print(
+            ("Airport codes: https://airmundo.com"
+             "/en/blog/airport-codes-european-airports/")
+        )
         sys.exit(1)
 
     else:
@@ -220,7 +224,8 @@ if __name__ == "__main__":
 
         time.sleep(2)
 
-    subject = "Flights {} - {} ({} days stay)".format(origin, destination, duration)
+    subject = "Flights {} - {} ({} days stay)".format(
+        origin, destination, duration)
 
     content = ["<h1>Results (max price {})</h1>".format(max_price)]
 
@@ -234,4 +239,4 @@ if __name__ == "__main__":
         with open(filename, "w") as f:
             f.write("\n".join(content) + "\n")
     else:
-        mail_html(subject, "\n".join(content))
+        print("\n".join(content) + "\n")
