@@ -6,7 +6,6 @@ import calendar
 import datetime
 import os
 import re
-import socket
 import sys
 import time
 
@@ -35,17 +34,17 @@ API_URL = (
     "&orderby=Price"
 )
 REFRESH_CACHE = 3600
+DEBUG = bool(os.getenv("DEBUG", False))
 
-LOCAL = "local" in socket.gethostname().lower()
 NOW = datetime.datetime.now()
-NUM_MONTHS_TO_CHECK = 4
+NUM_MONTHS_TO_CHECK = 4  # TODO cli arg
 DEFAULT_SORT = "price"
 DEFAULT_TIMERANGE = "0800-2200"
 DEFAULT_MAX_PRICE = 200
 
 Record = namedtuple("Record", "leave goback price link")
 
-if LOCAL:
+if DEBUG:
     # cache when developing
     requests_cache.install_cache("cache", backend="sqlite", expire_after=REFRESH_CACHE)
 
@@ -210,7 +209,7 @@ if __name__ == "__main__":
         output = "\n".join(gen_output(results, sort_by=sort))
         content.append(output)
 
-    if LOCAL:
+    if DEBUG:
         print("\n".join(content))
     else:
         mail_html(subject, "\n".join(content))
