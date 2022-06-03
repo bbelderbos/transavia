@@ -40,25 +40,6 @@ DEFAULT_SORT = "price"
 DEFAULT_TIMERANGE = "0700-2300"
 DEFAULT_MAX_PRICE = 250
 
-CSS = """
-table {
-    border-collapse: collapse;
-}
-
-td {
-    position: relative;
-    padding: 5px 10px;
-}
-
-tr.strikeout td:before {
-    content: " ";
-    position: absolute;
-    top: 50%;
-    left: 0;
-    border-bottom: 1px solid #111;
-    width: 100%;
-}
-"""
 Record = namedtuple("Record", "leave goback price link")
 
 if DEBUG:
@@ -131,7 +112,6 @@ def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
         raise
 
     output = []
-    output.append("<style>{}</style>".format(CSS))
     output.append("<h2>* Sorted by {}</h2>".format(sort_by))
     output.append("<table>")
 
@@ -140,16 +120,21 @@ def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
     output.append(fmt.format(*cols))
 
     fmt = (
-        "<tr{1}>"
-        "<td>{0.leave}</td>"
-        "<td>{0.goback}</td>"
-        "<td>{0.price}</td>"
-        '<td><a href="{0.link}">book</a></td>'
+        "<tr{0}>"
+        "<td>{1.leave}</td>"
+        "<td>{1.goback}</td>"
+        "<td>{1.price}</td>"
+        '<td>{2}</td>'
         "</tr>"
     )
     for rec in results:
-        cls_ = " class='strikeout'" if int(rec.price) > max_price else ""
-        row = fmt.format(rec, cls_)
+        if int(rec.price) > max_price:
+            style = " style='color: b2beb5;'"
+            link = ""
+        else:
+            style = ""
+            link = "<a href='{}'>book</a>".format(rec.link)
+        row = fmt.format(style, rec, link)
         output.append(row)
 
     output.append("</table>")
