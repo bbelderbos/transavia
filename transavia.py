@@ -235,7 +235,7 @@ if __name__ == "__main__":
         content.append(output)
 
     if DEBUG:
-        filename = f"{origin}-{destination}.html"
+        filename = "{}-{}.html".format(origin, destination)
         with open(filename, "w") as f:
             f.write("\n".join(content) + "\n")
     else:
