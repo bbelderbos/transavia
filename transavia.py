@@ -37,7 +37,7 @@ NOW = datetime.datetime.now()
 # TODO cli args
 NUM_MONTHS_TO_CHECK = 4
 DEFAULT_SORT = "price"
-DEFAULT_TIMERANGE = "0700-2300"
+DEFAULT_TIMERANGE = "0800-2200"
 DEFAULT_MAX_PRICE = 250
 
 Record = namedtuple("Record", "leave goback price link")
