@@ -13,8 +13,11 @@ import time
 from dateutil.relativedelta import relativedelta
 import requests
 import requests_cache
+from dotenv import load_dotenv
 
 from mail import mail_html
+
+load_dotenv()
 
 API_KEY = os.getenv("TRANSAVIA_KEY")
 API_URL = (

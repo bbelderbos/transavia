@@ -4,9 +4,12 @@ import os
 import smtplib
 import sys
 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 FROM_MAIL = os.environ.get('FROM_MAIL')
-TO_MAIL = os.environ.get('TO_MAIL').split()
+TO_MAIL = os.environ.get('TO_MAIL')
 
 
 if not FROM_MAIL or not TO_MAIL:
