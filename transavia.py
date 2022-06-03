@@ -37,18 +37,37 @@ REFRESH_CACHE = 3600
 DEBUG = bool(os.getenv("DEBUG", False))
 
 NOW = datetime.datetime.now()
-NUM_MONTHS_TO_CHECK = 4  # TODO cli arg
-DEFAULT_SORT = "price"
-DEFAULT_TIMERANGE = "0800-2200"
-DEFAULT_MAX_PRICE = 200
 
+# TODO cli args
+NUM_MONTHS_TO_CHECK = 4
+DEFAULT_SORT = "price"
+DEFAULT_TIMERANGE = "0700-2300"
+DEFAULT_MAX_PRICE = 250
+
+CSS = """
+table {
+    border-collapse: collapse;
+}
+
+td {
+    position: relative;
+    padding: 5px 10px;
+}
+
+tr.strikeout td:before {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    border-bottom: 1px solid #111;
+    width: 100%;
+}
+"""
 Record = namedtuple("Record", "leave goback price link")
 
 if DEBUG:
     # cache when developing
     requests_cache.install_cache("cache", backend="sqlite", expire_after=REFRESH_CACHE)
-
-flight_combo_seen = set()
 
 
 def gen_months():
@@ -68,8 +87,8 @@ def query_api(params):
     headers = {"apikey": API_KEY}
     url = API_URL.format(**params)
     resp = requests.get(url, headers=headers).json()
-    # print(url)
-    # print(resp)
+
+    flight_combo_seen = set()
 
     for offer in resp["flightOffer"]:
         key = (offer["outboundFlight"]["id"], offer["inboundFlight"]["id"])
@@ -111,6 +130,7 @@ def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
         raise
 
     output = []
+    output.append("<style>{}</style>".format(CSS))
     output.append("<h2>* Sorted by {}</h2>".format(sort_by))
     output.append("<table>")
 
@@ -119,7 +139,7 @@ def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
     output.append(fmt.format(*cols))
 
     fmt = (
-        "<tr>"
+        "<tr{1}>"
         "<td>{0.leave}</td>"
         "<td>{0.goback}</td>"
         "<td>{0.price}</td>"
@@ -127,9 +147,9 @@ def gen_output(results, sort_by=DEFAULT_SORT, max_price=DEFAULT_MAX_PRICE):
         "</tr>"
     )
     for rec in results:
-        if int(rec.price) > max_price:
-            continue
-        output.append(fmt.format(rec))
+        cls_ = " class='strikeout'" if int(rec.price) > max_price else ""
+        row = fmt.format(rec, cls_)
+        output.append(row)
 
     output.append("</table>")
     return output
@@ -210,6 +230,8 @@ if __name__ == "__main__":
         content.append(output)
 
     if DEBUG:
-        print("\n".join(content))
+        filename = f"{origin}-{destination}.html"
+        with open(filename, "w") as f:
+            f.write("\n".join(content) + "\n")
     else:
         mail_html(subject, "\n".join(content))
