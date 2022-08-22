@@ -51,7 +51,7 @@ if DEBUG:
 def gen_months():
     """Month generator starting with current month.
     Format: YYYYMM"""
-    i = 0
+    i = 1  # start with next month
     while True:
         month = NOW + relativedelta(months=+i)
         yield month.strftime("%Y%m")
@@ -65,11 +65,17 @@ def query_api(params):
     headers = {"apikey": API_KEY}
     # no f-string because using 3.5 on server where this runs
     url = API_URL.format(**params)
-    resp = requests.get(url, headers=headers).json()
+    resp = requests.get(url, headers=headers)
+
+    if not resp.ok:
+        print("Bad response:", resp)
+        return []
+
+    data = resp.json()
 
     flight_combo_seen = set()
 
-    for offer in resp["flightOffer"]:
+    for offer in data["flightOffer"]:
         key = (offer["outboundFlight"]["id"], offer["inboundFlight"]["id"])
         if key in flight_combo_seen:
             continue
